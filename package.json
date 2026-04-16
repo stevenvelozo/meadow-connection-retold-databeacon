@@ -1,0 +1,46 @@
+{
+	"name": "meadow-connection-retold-databeacon",
+	"version": "0.0.1",
+	"description": "Meadow connection that relays CRUD and introspection through an Ultravisor mesh to a remote retold-databeacon agent.",
+	"main": "source/Meadow-Connection-RetoldDataBeacon.js",
+	"scripts": {
+		"start": "node source/Meadow-Connection-RetoldDataBeacon.js",
+		"test": "npx mocha -u tdd --exit --timeout 15000 test/*_tests.js",
+		"build": "npx quack build"
+	},
+	"mocha": {
+		"diff": true,
+		"extension": ["js"],
+		"package": "./package.json",
+		"reporter": "spec",
+		"slow": "75",
+		"timeout": "15000",
+		"ui": "tdd",
+		"watch-files": ["source/**/*.js", "test/**/*.js"]
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/stevenvelozo/meadow-connection-retold-databeacon.git"
+	},
+	"keywords": [
+		"meadow",
+		"retold",
+		"databeacon",
+		"ultravisor",
+		"remote"
+	],
+	"author": "Steven Velozo <steven@velozo.com> (http://velozo.com/)",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/stevenvelozo/meadow-connection-retold-databeacon/issues"
+	},
+	"homepage": "https://github.com/stevenvelozo/meadow-connection-retold-databeacon",
+	"devDependencies": {
+		"chai": "^4.3.10",
+		"mocha": "^10.2.0"
+	},
+	"dependencies": {
+		"fable-serviceproviderbase": "^3.0.19",
+		"fable-ultravisor-client": "^0.0.1"
+	}
+}
