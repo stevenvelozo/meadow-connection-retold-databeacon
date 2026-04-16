@@ -54,6 +54,7 @@ class MeadowConnectionRetoldDataBeacon extends libFableServiceProviderBase
 							: (typeof (tmpFallback.Password) === 'string') ? tmpFallback.Password
 							: '';
 		this._TimeoutMs = tmpOpts.TimeoutMs || tmpFallback.TimeoutMs || DEFAULT_TIMEOUT_MS;
+		this._TargetConnectionHash = tmpOpts.TargetConnectionHash || tmpFallback.TargetConnectionHash || '';
 
 		// Lazy: the client is built on connect so configure() style changes
 		// can reset state cleanly.
@@ -82,6 +83,11 @@ class MeadowConnectionRetoldDataBeacon extends libFableServiceProviderBase
 		{
 			this.log.error('Meadow-Connection-RetoldDataBeacon: TargetBeaconName is required.');
 			return tmpCallback(new Error('Meadow-Connection-RetoldDataBeacon: TargetBeaconName is required.'));
+		}
+		if (!this._TargetConnectionHash)
+		{
+			this.log.error('Meadow-Connection-RetoldDataBeacon: TargetConnectionHash is required (the URL-safe hash of the remote connection name).');
+			return tmpCallback(new Error('Meadow-Connection-RetoldDataBeacon: TargetConnectionHash is required.'));
 		}
 
 		if (this.connected && this._Client)

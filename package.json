@@ -1,6 +1,6 @@
 {
 	"name": "meadow-connection-retold-databeacon",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "Meadow connection that relays CRUD and introspection through an Ultravisor mesh to a remote retold-databeacon agent.",
 	"main": "source/Meadow-Connection-RetoldDataBeacon.js",
 	"scripts": {
@@ -10,13 +10,18 @@
 	},
 	"mocha": {
 		"diff": true,
-		"extension": ["js"],
+		"extension": [
+			"js"
+		],
 		"package": "./package.json",
 		"reporter": "spec",
 		"slow": "75",
 		"timeout": "15000",
 		"ui": "tdd",
-		"watch-files": ["source/**/*.js", "test/**/*.js"]
+		"watch-files": [
+			"source/**/*.js",
+			"test/**/*.js"
+		]
 	},
 	"repository": {
 		"type": "git",

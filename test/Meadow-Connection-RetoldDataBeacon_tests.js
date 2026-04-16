@@ -134,6 +134,7 @@ suite('Meadow-Connection-RetoldDataBeacon', () =>
 				{
 					UltravisorURL: mockURL(),
 					TargetBeaconName: 'customer-x',
+					TargetConnectionHash: 'bookstore-mssql',
 					UserName: 'alice',
 					Password: 'pw',
 					TimeoutMs: 5000
@@ -142,6 +143,7 @@ suite('Meadow-Connection-RetoldDataBeacon', () =>
 			let tmpConn = new libConnection(tmpFable);
 			Expect(tmpConn._UltravisorURL).to.equal(mockURL());
 			Expect(tmpConn._TargetBeaconName).to.equal('customer-x');
+			Expect(tmpConn._TargetConnectionHash).to.equal('bookstore-mssql');
 			Expect(tmpConn._UserName).to.equal('alice');
 			Expect(tmpConn._TimeoutMs).to.equal(5000);
 		});
@@ -149,11 +151,12 @@ suite('Meadow-Connection-RetoldDataBeacon', () =>
 		test('constructor options override fable.settings', () =>
 		{
 			let tmpFable = makeFable({
-				RetoldDataBeacon: { UltravisorURL: 'http://wrong', TargetBeaconName: 'wrong' }
+				RetoldDataBeacon: { UltravisorURL: 'http://wrong', TargetBeaconName: 'wrong', TargetConnectionHash: 'wrong' }
 			});
-			let tmpConn = new libConnection(tmpFable, { UltravisorURL: mockURL(), TargetBeaconName: 'right' });
+			let tmpConn = new libConnection(tmpFable, { UltravisorURL: mockURL(), TargetBeaconName: 'right', TargetConnectionHash: 'right-hash' });
 			Expect(tmpConn._UltravisorURL).to.equal(mockURL());
 			Expect(tmpConn._TargetBeaconName).to.equal('right');
+			Expect(tmpConn._TargetConnectionHash).to.equal('right-hash');
 		});
 	});
 
@@ -163,7 +166,7 @@ suite('Meadow-Connection-RetoldDataBeacon', () =>
 		test('authenticates against ultravisor and registers as singleton', (fDone) =>
 		{
 			let tmpFable = makeFable({
-				RetoldDataBeacon: { UltravisorURL: mockURL(), TargetBeaconName: 'customer-x', UserName: 'alice', Password: 'p' }
+				RetoldDataBeacon: { UltravisorURL: mockURL(), TargetBeaconName: 'customer-x', TargetConnectionHash: 'bookstore-mssql', UserName: 'alice', Password: 'p' }
 			});
 			let tmpConn = new libConnection(tmpFable);
 			tmpConn.connectAsync((pError) =>
@@ -195,12 +198,24 @@ suite('Meadow-Connection-RetoldDataBeacon', () =>
 
 		test('rejects when TargetBeaconName is missing', (fDone) =>
 		{
-			let tmpFable = makeFable({ RetoldDataBeacon: { UltravisorURL: mockURL() } });
+			let tmpFable = makeFable({ RetoldDataBeacon: { UltravisorURL: mockURL(), TargetConnectionHash: 'x' } });
 			let tmpConn = new libConnection(tmpFable);
 			tmpConn.connectAsync((pError) =>
 			{
 				Expect(pError).to.be.an('error');
 				Expect(pError.message).to.contain('TargetBeaconName');
+				fDone();
+			});
+		});
+
+		test('rejects when TargetConnectionHash is missing', (fDone) =>
+		{
+			let tmpFable = makeFable({ RetoldDataBeacon: { UltravisorURL: mockURL(), TargetBeaconName: 'x' } });
+			let tmpConn = new libConnection(tmpFable);
+			tmpConn.connectAsync((pError) =>
+			{
+				Expect(pError).to.be.an('error');
+				Expect(pError.message).to.contain('TargetConnectionHash');
 				fDone();
 			});
 		});
@@ -212,7 +227,7 @@ suite('Meadow-Connection-RetoldDataBeacon', () =>
 		test('wraps the request as a MeadowProxy:Request work item with the TargetBeaconName as AffinityKey', (fDone) =>
 		{
 			let tmpFable = makeFable({
-				RetoldDataBeacon: { UltravisorURL: mockURL(), TargetBeaconName: 'customer-q', UserName: 'bob' }
+				RetoldDataBeacon: { UltravisorURL: mockURL(), TargetBeaconName: 'customer-q', TargetConnectionHash: 'bookstore-mssql', UserName: 'bob' }
 			});
 			let tmpConn = new libConnection(tmpFable);
 
@@ -222,7 +237,7 @@ suite('Meadow-Connection-RetoldDataBeacon', () =>
 				Expect(pWorkItem.Action).to.equal('Request');
 				Expect(pWorkItem.AffinityKey).to.equal('customer-q');
 				Expect(pWorkItem.Settings.Method).to.equal('GET');
-				Expect(pWorkItem.Settings.Path).to.equal('/1.0/Book');
+				Expect(pWorkItem.Settings.Path).to.equal('/1.0/bookstore-mssql/Book');
 				Expect(pWorkItem.Settings.RemoteUser).to.equal('bob');
 
 				pResponse.writeHead(200, { 'Content-Type': 'application/json' });
@@ -238,7 +253,7 @@ suite('Meadow-Connection-RetoldDataBeacon', () =>
 			tmpConn.connectAsync((pAuthError) =>
 			{
 				Expect(pAuthError).to.equal(null);
-				tmpConn.dispatchRequest({ Method: 'GET', Path: '/1.0/Book' }, (pError, pResponseBody) =>
+				tmpConn.dispatchRequest({ Method: 'GET', Path: '/1.0/bookstore-mssql/Book' }, (pError, pResponseBody) =>
 				{
 					Expect(pError).to.equal(null);
 					Expect(pResponseBody).to.equal('[{"IDBook":1}]');
@@ -250,7 +265,7 @@ suite('Meadow-Connection-RetoldDataBeacon', () =>
 		test('surfaces a non-2xx remote status as a callback error', (fDone) =>
 		{
 			let tmpFable = makeFable({
-				RetoldDataBeacon: { UltravisorURL: mockURL(), TargetBeaconName: 'customer-q' }
+				RetoldDataBeacon: { UltravisorURL: mockURL(), TargetBeaconName: 'customer-q', TargetConnectionHash: 'bookstore-mssql' }
 			});
 			let tmpConn = new libConnection(tmpFable);
 
@@ -276,7 +291,7 @@ suite('Meadow-Connection-RetoldDataBeacon', () =>
 		test('errors cleanly when called before connect', (fDone) =>
 		{
 			let tmpFable = makeFable({
-				RetoldDataBeacon: { UltravisorURL: mockURL(), TargetBeaconName: 'customer-q' }
+				RetoldDataBeacon: { UltravisorURL: mockURL(), TargetBeaconName: 'customer-q', TargetConnectionHash: 'bookstore-mssql' }
 			});
 			let tmpConn = new libConnection(tmpFable);
 			tmpConn.dispatchRequest({ Method: 'GET', Path: '/1.0/Book' }, (pError) =>
@@ -294,7 +309,7 @@ suite('Meadow-Connection-RetoldDataBeacon', () =>
 		test('listTables dispatches DataBeaconAccess:ListTables', (fDone) =>
 		{
 			let tmpFable = makeFable({
-				RetoldDataBeacon: { UltravisorURL: mockURL(), TargetBeaconName: 'customer-q', IDBeaconConnection: 42 }
+				RetoldDataBeacon: { UltravisorURL: mockURL(), TargetBeaconName: 'customer-q', TargetConnectionHash: 'bookstore-mssql', IDBeaconConnection: 42 }
 			});
 			let tmpConn = new libConnection(tmpFable);
 
@@ -323,7 +338,7 @@ suite('Meadow-Connection-RetoldDataBeacon', () =>
 		test('close() clears state and unregisters singleton', (fDone) =>
 		{
 			let tmpFable = makeFable({
-				RetoldDataBeacon: { UltravisorURL: mockURL(), TargetBeaconName: 'customer-q' }
+				RetoldDataBeacon: { UltravisorURL: mockURL(), TargetBeaconName: 'customer-q', TargetConnectionHash: 'bookstore-mssql' }
 			});
 			let tmpConn = new libConnection(tmpFable);
 			tmpConn.connectAsync(() =>
